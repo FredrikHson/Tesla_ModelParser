@@ -13,13 +13,13 @@ const char* NodeType_Names[] =
 
 enum NodeType
 {
-    Root = 0,
-    Transform = 1,
-    Object = 2,
-    Mesh = 3,
+    Root        = 0,
+    Transform   = 1,
+    Object      = 2,
+    Mesh        = 3,
     VertexArray = 4,
-    IndexArray = 5,
-    Material = 6
+    IndexArray  = 5,
+    Material    = 6
 };
 
 char* readLenChar(FILE* f)
