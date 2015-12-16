@@ -1,14 +1,16 @@
 #include <stdio.h>
-const char* NodeTypes[] =
+
+const char* NodeType_Names[] =
 {
-    "Root = 0",
-    "Transform = 1",
-    "Object = 2",
-    "Mesh = 3",
-    "VertexArray = 4",
-    "IndexArray = 5",
-    "Material = 6"
+    "Root",
+    "Transform",
+    "Object",
+    "Mesh",
+    "VertexArray",
+    "IndexArray",
+    "Material"
 };
+
 enum NodeType
 {
     Root = 0,
@@ -19,6 +21,18 @@ enum NodeType
     IndexArray = 5,
     Material = 6
 };
+
+char* readLenChar(FILE* f)
+{
+    unsigned int len = 0;
+    fread(&len, 4, 1, f);
+    char* text = new char[len + 1]; // include zero termination
+
+    fread(text, len, 1, f);
+    text[len] = 0;
+
+    return text;
+}
 
 void readTranformData(FILE* f)
 {
@@ -35,6 +49,103 @@ void readTranformData(FILE* f)
     }
 }
 
+void readIndexArrayData(FILE* f)
+{
+
+    unsigned char sides = 0;
+    unsigned int arraylen = 0;
+    fread(&sides, 1, 1, f);
+
+    fread(&arraylen, 4, 1, f);
+    unsigned int* indexdata = new unsigned int[arraylen];
+
+    fread(indexdata, arraylen * 4, 1, f);
+    fprintf(stdout, "\tsides:%i\n\tarraylen:%i\n", sides, arraylen);
+    int j = 0;
+
+    for(int i = 0; i < arraylen; i++)
+    {
+        if(j == 0)
+        {
+            fprintf(stdout, "\t");
+        }
+
+        fprintf(stdout, "%i", indexdata[i]);
+        j++;
+
+        if(j >= sides)
+        {
+            fprintf(stdout, "\n");
+            j = 0;
+        }
+        else
+        {
+            fprintf(stdout, ", ");
+        }
+    }
+
+    if(indexdata)
+    {
+        delete [] indexdata;
+    }
+}
+void readVertexArrayData(FILE* f)
+{
+    char* attrib = readLenChar(f);
+
+    unsigned char vertlength = 0;
+    unsigned int arraylen = 0;
+    fread(&vertlength, 1, 1, f);
+
+    fread(&arraylen, 4, 1, f);
+    float* vertexdata = new float[arraylen];
+
+    fread(vertexdata, arraylen * 4, 1, f);
+    fprintf(stdout, "\tattrib:%s\n\tvertlength:%i\n\tarraylen:%i\n", attrib, vertlength, arraylen);
+    int j = 0;
+
+    for(int i = 0; i < arraylen; i++)
+    {
+        if(j == 0)
+        {
+            fprintf(stdout, "\t");
+        }
+
+        fprintf(stdout, "%f", vertexdata[i]);
+        j++;
+
+        if(j >= vertlength)
+        {
+            fprintf(stdout, "\n");
+            j = 0;
+        }
+        else
+        {
+            fprintf(stdout, ", ");
+        }
+    }
+
+    if(attrib)
+    {
+        delete [] attrib;
+    }
+
+    if(vertexdata)
+    {
+        delete [] vertexdata;
+    }
+}
+
+void readMaterialData(FILE* f)
+{
+    char* name = readLenChar(f);
+    fprintf(stdout, "\tname:%s\n", name);
+
+    if(name)
+    {
+        delete [] name;
+    }
+}
 bool readNode(FILE* f)
 {
     if(feof(f))
@@ -54,13 +165,31 @@ bool readNode(FILE* f)
     fread(&type, 2, 1, f);
     fread(&numchildren, 2, 1, f);
 
-    fprintf(stdout, "Node\n\tSize:%i Type:%s numchildren:%i\n", size, NodeTypes[type], numchildren);
+    fprintf(stdout, "Node\n\tSize:%i Type:%s numchildren:%i\n", size, NodeType_Names[type], numchildren);
 
     switch(type)
     {
         case Transform:
         {
             readTranformData(f);
+            break;
+        }
+
+        case VertexArray:
+        {
+            readVertexArrayData(f);
+            break;
+        }
+
+        case IndexArray:
+        {
+            readIndexArrayData(f);
+            break;
+        }
+        case Material:
+        {
+            readMaterialData(f);
+            break;
         }
 
         default:
